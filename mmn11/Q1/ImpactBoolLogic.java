@@ -3,27 +3,32 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Random;
 
-class ImpactBool { 
+class ImpactBoolLogic { 
     public static void main(String[] args){    
         Scanner scan = new Scanner(System.in); // Create Scanner once outside the loop
         Random random = new Random();
         
-        String playAgain = "no";
+        String playAgain  = "";
         
         do {
             String uniqueNumber = generateUniqueFourDigitNumber(random);
             char[] targetArray = uniqueNumber.toCharArray(); // Convert the target number to a char array
             System.out.println("The program chose: " + uniqueNumber + " as a target number");
 
-            int score = 0;
             int tries = 1;
             ArrayList<String> attemptedStrings = new ArrayList<>(); // Use ArrayList for dynamic storage
 
-            while(score != 4) {
-                score = 0; 
+            while (true) {
+                int directHits = 0; // Number of exact matches
+                int indirectHits = 0; // Number of correct digits in the wrong position
 
-                System.out.print("Enter a 4-digit number: ");
+                System.out.print("Enter a 4-digit number (or quit (q)): ");
                 String input = scan.nextLine(); // Read input as a string
+                if(input.equalsIgnoreCase("q")){
+                    System.out.println("The secret number was: "+ uniqueNumber);
+                    break;
+                }
+                    
                 attemptedStrings.add(input); // Add each attempt to the list
 
                 if (input.length() != 4) {
@@ -33,30 +38,40 @@ class ImpactBool {
 
                 char[] inputArray = input.toCharArray(); // Convert the input to a char array
 
-                for(int i = 0; i < inputArray.length; i++) {
-                    char ch = inputArray[i];
-                    System.out.println("Current char is: " + ch);
-                    
-                    if(!Character.isDigit(ch)) { // Checks for letters or other characters in our 4-digit number 
-                        System.out.println("Please enter only digits.");
-                        score = -1; // Invalidate score to avoid misleading output
-                        break; // Exit the loop if non-digit is found
-                    }
+                // Check for direct hits
+                boolean[] matchedInTarget = new boolean[4]; // Track matched positions in target
+                boolean[] matchedInInput = new boolean[4];  // Track matched positions in input
 
-                    if(ch == targetArray[i]) {
-                        score++; // Bingo - matching position and digit
+                for (int i = 0; i < inputArray.length; i++) {
+                    if (inputArray[i] == targetArray[i]) {
+                        directHits++;
+                        matchedInTarget[i] = true;
+                        matchedInInput[i] = true;
                     }
                 }
 
-                if (score == 4) {
+                // Check for indirect hits
+                for (int i = 0; i < inputArray.length; i++) {
+                    if (!matchedInInput[i]) { // Only check unmatched positions
+                        for (int j = 0; j < targetArray.length; j++) {
+                            if (!matchedInTarget[j] && inputArray[i] == targetArray[j]) {
+                                indirectHits++;
+                                matchedInTarget[j] = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (directHits == 4) {
                     System.out.println("Congratulations! You've guessed the number: " + input + "\nYou tried " + tries + " times");
                     System.out.println("Your attempts: " + attemptedStrings); // Print all attempts
                     System.out.println("Do you want to play again? (yes or no)");
                     
                     playAgain = scan.nextLine(); // Read input to determine if user wants to play again
                     break;
-                } else if (score >= 0) { // Ensures only valid scores display
-                    System.out.println("Your score: " + score + " - Try again!");
+                } else { 
+                    System.out.println("Your score: " + directHits + " direct hits and " + indirectHits + " indirect hits - Try again!");
                     tries++;
                 }
             }
@@ -67,13 +82,11 @@ class ImpactBool {
         scan.close(); // Close the scanner after the loop
     }
 
-    //
-
     // Private method to generate a unique 4-digit number
     private static String generateUniqueFourDigitNumber(Random random) { 
         int number;
         while (true) {
-            number = 1000 + random.nextInt(9000); // Generate a 4-digit number
+            number = 1000 + random.nextInt(9000); // Generate a 4-digit number - 1000-9999
             if (hasUniqueDigits(number)) {
                 return Integer.toString(number);
             }
