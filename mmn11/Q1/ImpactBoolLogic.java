@@ -1,47 +1,68 @@
 package mmn11.Q1;
-import java.util.ArrayList;
-import java.util.Scanner;
-import java.util.Random;
 
-class ImpactBoolLogic { 
-    public static void main(String[] args){    
-        Scanner scan = new Scanner(System.in); // Create Scanner once outside the loop
+import java.util.ArrayList;
+import java.util.Random;
+import javax.swing.JOptionPane;
+
+class ImpactBoolLogic {
+    public static void main(String[] args) {
         Random random = new Random();
-        
-        String playAgain  = "";
-        
+
+        String playAgain = "";
+
         do {
             String uniqueNumber = generateUniqueFourDigitNumber(random);
-            char[] targetArray = uniqueNumber.toCharArray(); // Convert the target number to a char array
-            System.out.println("The program chose: " + uniqueNumber + " as a target number");
+            char[] targetArray = uniqueNumber.toCharArray();
+
+            // Uncomment the following line if you want to display the secret number (for debugging)
+            // JOptionPane.showMessageDialog(null, "The program chose: " + uniqueNumber + " as a target number");
 
             int tries = 1;
-            ArrayList<String> attemptedStrings = new ArrayList<>(); // Use ArrayList for dynamic storage
+            ArrayList<String> attemptedStrings = new ArrayList<>();
 
             while (true) {
-                int directHits = 0; // Number of exact matches
-                int indirectHits = 0; // Number of correct digits in the wrong position
+                int directHits = 0;
+                int indirectHits = 0;
+               
+                
+                 //Build previous attempts message from scratch each time while iterating on attemptedStrings results 
+                 //That were written in: String attemptResult = "Attempt " + tries + ": " + input + " - " + directHits + " direct hits and " + indirectHits + " indirect hits"; 
+                 //attemptedStrings.add(attemptResult); 
+                String previousAttemptsMessage = "";
+                if (!attemptedStrings.isEmpty()) {
+                    previousAttemptsMessage = "Previous attempts:\n";
+                    for (String attempt : attemptedStrings) {
+                        previousAttemptsMessage += attempt + "\n";
+                    }
+                }
 
-                System.out.print("Enter a 4-digit number (or quit (q)): ");
-                String input = scan.nextLine(); // Read input as a string
-                if(input.equalsIgnoreCase("q")){
-                    System.out.println("The secret number was: "+ uniqueNumber);
+                // Prompt the user with previous attempts included
+                String input = JOptionPane.showInputDialog(null, "The target number is: " + uniqueNumber + "\n" + previousAttemptsMessage + "\nEnter a 4-digit number or cancel:");
+
+                if (input == null) {
+                    // User canceled the input
+                    JOptionPane.showMessageDialog(null, "The target number was: " + uniqueNumber + "\nYou tried: " + (tries - 1) + " times\n" + previousAttemptsMessage);
+
+                    int option = JOptionPane.showConfirmDialog(null, "Do you want to play again?", "Play Again?", JOptionPane.YES_NO_OPTION);
+                    if (option == JOptionPane.YES_OPTION) {
+                        playAgain = "yes";
+                    } else {
+                        playAgain = "no";
+                    }
                     break;
                 }
-                    
-                attemptedStrings.add(input); // Add each attempt to the list
 
-                if (input.length() != 4) {
-                    System.out.println("Please enter exactly 4 digits.");
-                    continue; // Skip to the next iteration of the loop
+                if (input.length() != 4 || !input.matches("\\d{4}")) {
+                    JOptionPane.showMessageDialog(null, "Please enter exactly 4 digits.");
+                    continue;
                 }
 
-                char[] inputArray = input.toCharArray(); // Convert the input to a char array
+                char[] inputArray = input.toCharArray();
+
+                boolean[] matchedInTarget = new boolean[4];
+                boolean[] matchedInInput = new boolean[4];
 
                 // Check for direct hits
-                boolean[] matchedInTarget = new boolean[4]; // Track matched positions in target
-                boolean[] matchedInInput = new boolean[4];  // Track matched positions in input
-
                 for (int i = 0; i < inputArray.length; i++) {
                     if (inputArray[i] == targetArray[i]) {
                         directHits++;
@@ -52,7 +73,7 @@ class ImpactBoolLogic {
 
                 // Check for indirect hits
                 for (int i = 0; i < inputArray.length; i++) {
-                    if (!matchedInInput[i]) { // Only check unmatched positions
+                    if (!matchedInInput[i]) {
                         for (int j = 0; j < targetArray.length; j++) {
                             if (!matchedInTarget[j] && inputArray[i] == targetArray[j]) {
                                 indirectHits++;
@@ -63,30 +84,36 @@ class ImpactBoolLogic {
                     }
                 }
 
+                String attemptResult = "Attempt " + tries + ": " + input + " - " + directHits + " direct hits and " + indirectHits + " indirect hits";
+                attemptedStrings.add(attemptResult);
+
                 if (directHits == 4) {
-                    System.out.println("Congratulations! You've guessed the number: " + input + "\nYou tried " + tries + " times");
-                    System.out.println("Your attempts: " + attemptedStrings); // Print all attempts
-                    System.out.println("Do you want to play again? (yes or no)");
-                    
-                    playAgain = scan.nextLine(); // Read input to determine if user wants to play again
+                    // User guessed the number correctly
+                    JOptionPane.showMessageDialog(null, "Congratulations! You've guessed the number: " + input + "\nYou tried " + tries + " times\n" + previousAttemptsMessage + attemptResult);
+
+                    int option = JOptionPane.showConfirmDialog(null, "Do you want to play again?", "Play Again?", JOptionPane.YES_NO_OPTION);
+                    if (option == JOptionPane.YES_OPTION) {
+                        playAgain = "yes";
+                    } else {
+                        playAgain = "no";
+                    }
                     break;
-                } else { 
-                    System.out.println("Your score: " + directHits + " direct hits and " + indirectHits + " indirect hits - Try again!");
+                } else {
+                    // Inform the user of their current attempt result
+                    JOptionPane.showMessageDialog(null, attemptResult + "\nTry again!");
                     tries++;
                 }
             }
+        } while (playAgain.equalsIgnoreCase("yes"));
 
-        } while (playAgain.equalsIgnoreCase("yes")); // Loop repeats if the user enters "yes"
-
-        System.out.println("Bye");
-        scan.close(); // Close the scanner after the loop
+        JOptionPane.showMessageDialog(null, "Bye");
     }
 
     // Private method to generate a unique 4-digit number
-    private static String generateUniqueFourDigitNumber(Random random) { 
+    private static String generateUniqueFourDigitNumber(Random random) {
         int number;
         while (true) {
-            number = 1000 + random.nextInt(9000); // Generate a 4-digit number - 1000-9999
+            number = 1000 + random.nextInt(9000); // Generate a 4-digit number between 1000 and 9999
             if (hasUniqueDigits(number)) {
                 return Integer.toString(number);
             }
